@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>RevPoints</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 900px;
+      margin: 20px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+    }
+    h1, h2 {
+      text-align: center;
+    }
+    form label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    form input[type="text"],
+    form input[type="file"] {
+      width: 100%;
+      padding: 8px;
+      margin-top: 6px;
+      box-sizing: border-box;
+      font-size: 1rem;
+    }
+    button {
+      margin-top: 15px;
+      padding: 10px;
+      width: 100%;
+      background-color: #3498db;
+      border: none;
+      color: white;
+      font-size: 1.1rem;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:disabled {
+      background-color: #7f8c8d;
+      cursor: default;
+    }
+    .video-item {
+      border-top: 1px solid #ccc;
+      padding: 20px 0;
+    }
+    video {
+      max-width: 100%;
+      border-radius: 6px;
+      margin-top: 10px;
+    }
+    .delete-button {
+      margin-top: 10px;
+      background-color: #e67e22;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .tabs {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .tab {
+      display: inline-block;
+      padding: 10px 25px;
+      margin: 0 5px;
+      background-color: #eee;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 1.1rem;
+      transition: background-color 0.3s;
+      border: none;
+    }
+    .tab.active {
+      background-color: #3498db;
+      color: white;
+    }
+    .unknown {
+      color: #c0392b;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>RevPoints</h1>
+    <div class="tabs">
+      <button type="button" class="tab active" id="tabUnderground">Underground Clips</button>
+      <button type="button" class="tab" id="tabTutorials">Tutorials</button>
+    </div>
+
+    <form id="uploadForm" enctype="multipart/form-data">
+      <label for="title">Video Title *</label>
+      <input type="text" id="title" name="title" required placeholder="Video title" />
+
+      <label for="combo">Trick/Combo Used</label>
+      <input type="text" id="combo" name="combo" placeholder="Combo used (e.g. ATW HATW)" />
+
+      <label for="video">Select Video File *</label>
+      <input type="file" id="video" name="video" accept="video/*" required />
+
+      <button type="submit" id="uploadBtn">Upload</button>
+    </form>
+
+    <h2>Videos</h2>
+    <div id="videos"></div>
+  </div>
+
+<script>
+  const uploadForm = document.getElementById('uploadForm');
+  const videosDiv = document.getElementById('videos');
+  const uploadBtn = document.getElementById('uploadBtn');
+  const tabTutorials = document.getElementById('tabTutorials');
+  const tabUnderground = document.getElementById('tabUnderground');
+  const comboInput = document.getElementById('combo');
+
+  const trickScores = {
+    'XTB': 1, 'RXTB': 1, 'XTBV': 1, 'RXTBV': 1,
+    'TB': 1, 'RTB': 1, 'TBV': 1,
+    'XO': 1.5, 'RXO': 1.5, 'XOV': 1.5, 'RXOV': 1.5,
+    'CO': 1.5, 'RCO': 1.5,
+    'AXO': 1.5, 'ACO': 1.5, 'RACO': 1.5,
+    'LAXO': 1.5, 'LACO': 1.5, 'RLACO': 1.5,
+    'HATW': 1.5, 'RHATW': 1.5, 'HHTW': 1.5, 'RHHTW': 1.5,
+    'ATW': 2, 'RATW': 2, 'HLATW': 2, 'HRLATW': 2,
+    'HHTATW': 2, 'HHMATW': 2, 'HHJATW': 2, 'HRHJATW': 2,
+    'HMG': 2, 'HMG in': 2, 'HMG out': 2, 'HRMG': 2,
+    'HFMG': 2, 'HFMG in': 2, 'HFMG out': 2, 'HRFMG': 2,
+    'MLATW': 2, 'RMLATW': 2,
+    'HTW': 2.5, 'RHTW': 2.5,
+    'AHLATW': 2.5, 'AHRLATW': 2.5,
+    'AHHTATW': 2.5, 'AHHMATW': 2.5, 'AHHJATW': 2.5, 'AHRHJATW': 2.5,
+    'HAMG': 2.5, 'HAMG in': 2.5, 'HAMG out': 2.5, 'HARMG': 2.5,
+    'HAFMG': 2.5, 'HAFMG in': 2.5, 'HAFMG out': 2.5, 'HARFMG': 2.5,
+    'AMLATW': 2.5, 'ARMLATW': 2.5,
+    'RatATW': 3, 'RRatATW': 3, 'TATW': 3, 'MATW': 3,
+    'JATW': 3, 'RJATW': 3, 'MLRRatATW': 3, 'RMLRatATW': 3,
+    'MLMATW': 3, 'RMLTATW': 3, 'MLRJATW': 3, 'RMLJATW': 3,
+    'ARatATW': 3.5, 'ARRatATW': 3.5, 'ATATW': 3.5, 'AMATW': 3.5,
+    'AJATW': 3.5, 'ARJATW': 3.5, 'AMLRRatATW': 3.5, 'ARMLRatATW': 3.5,
+    'AMLMATW': 3.5, 'ARMLTATW': 3.5, 'AMLRJATW': 3.5, 'ARMLJATW': 3.5,
+    'LATW': 4, 'RLATW': 4, 'HTATW': 4, 'HMATW': 4, 'HJATW': 4,
+    'RHJATW': 4, 'MG': 4, 'MG in': 4, 'MG out': 4, 'RMG': 4,
+    'FMG': 4, 'FMG in': 4, 'FMG out': 4, 'RFMG': 4,
+    'HTATW NJ': 4, 'HMATW NJ': 4, 'HJATW NJ': 4, 'RHJATW NJ': 4,
+    'ALATW': 4.5, 'ARLATW': 4.5, 'AHTATW': 4.5, 'AHMATW': 4.5,
+    'AHJATW': 4.5, 'ARHJATW': 4.5,
+    'AMG': 4.5, 'AMG in': 4.5, 'AMG out': 4.5, 'ARMG': 4.5,
+    'AFMG': 4.5, 'AFMG in': 4.5, 'AFMG out': 4.5, 'ARFMG': 4.5,
+    'AHTATW NJ': 4.5, 'AHMATW NJ': 4.5, 'AHJATW NJ': 4.5, 'ARHJATW NJ': 4.5,
+    'LRatATW': 5, 'LRRatATW': 5, 'LTATW': 5, 'LMATW': 5, 'LJATW': 5,
+    'LRJATW': 5, 'PT': 5, 'RPT': 5, 'RSenATW': 5, 'SenATW': 5,
+    'NM': 5, 'RNM': 5,
+    'MGRRatATW': 5, 'MGRRatATW in': 5, 'MGRatATW': 5, 'RMGRatATW': 5,
+    'MGMATW': 5, 'MGMATW in': 5, 'MGTATW': 5, 'RMGTATW': 5,
+    'MGRJATW': 5, 'MGRJATW in': 5, 'MGJATW': 5, 'RMGJATW': 5,
+    'FMGRRatATW': 5, 'FMGRRatATW in': 5, 'FMGRatATW': 5, 'RFMGRatATW': 5,
+    'FMGMATW': 5, 'FMGMATW in': 5, 'FMGTATW': 5, 'RFMGTATW': 5,
+    'FMGRJATW': 5, 'FMGRJATW in': 5, 'FMGJATW': 5, 'RFMGJATW': 5, 'FMGRJATW in': 5,
+    'FMGJATW': 5, 'RFMGJATW': 5, 'PT NJ': 5, 'RPT NJ': 5, 'RSenATW NJ': 5, 'SenATW NJ': 5, 
+    'NM NJ': 5, 'RNM NJ': 5, 'ALRatATW': 5.5, 'ALRRatATW': 5.5, 'ALTATW': 5.5, 'ALMATW': 5.5,
+    'ALJATW': 5.5, 'ALRJATW': 5.5, 'RSATW': 5.5, 'SATW': 5.5, 'ARSenATW': 5.5, 'ASenATW': 5.5,
+    'AMGRRatATW': 5.5, 'AMGRRatATW in': 5.5, 'AMGRatATW': 5.5, 'ARMGRatATW': 5.5, 'AMGMATW': 5.5,
+    'AMGMATW in': 5.5, 'AMGTATW': 5.5, 'ARMGTATW': 5.5, 'AMGRJATW': 5.5, 'AMGRJATW in': 5.5,
+    'AMGJATW': 5.5, 'ARMGJATW': 5.5, 'AFMGRRatATW': 5.5, 'AFMGRRatATW in': 5.5, 'AFMGRatATW': 5.5,
+    'ARFMGRatATW': 5.5, 'AFMGMATW': 5.5, 'AFMGMATW in': 5.5, 'AFMGTATW': 5.5, 'ARFMGTATW': 5.5,
+    'AFMGRJATW': 5.5, 'AFMGRJATW in': 5.5, 'AFMGJATW': 5.5, 'ARFMGJATW': 5.5, 'RSATW NJ': 5.5,
+  };
+
+  let videos = [];
+  let currentTab = 'underground';
+
+  function syncTabs(tab) {
+    if (tab === 'underground') {
+      tabUnderground.classList.add('active');
+      tabTutorials.classList.remove('active');
+      comboInput.disabled = false;
+    } else {
+      tabTutorials.classList.add('active');
+      tabUnderground.classList.remove('active');
+      comboInput.disabled = true;
+      comboInput.value = '';
+    }
+  }
+
+  tabUnderground.addEventListener('click', () => {
+    currentTab = 'underground';
+    syncTabs(currentTab);
+    loadVideosFromServer();
+  });
+
+  tabTutorials.addEventListener('click', () => {
+    currentTab = 'tutorials';
+    syncTabs(currentTab);
+    loadVideosFromServer();
+  });
+
+  function calcularScore(video) {
+    if (!video.combo) return 0;
+    const combos = video.combo.toUpperCase().trim().split(/\s+/).slice(0, 5);
+    let baseScore = 0;
+    combos.forEach(c => {
+      if (trickScores[c]) baseScore += trickScores[c];
+    });
+
+    const views = video.views || 0;
+    const now = new Date();
+    const uploadDate = new Date(video.date);
+    const daysSinceUpload = (now - uploadDate) / (1000*60*60*24);
+    const isNew = daysSinceUpload <= 7;
+
+    return baseScore;
+  }
+
+  function ordenarVideos(videosList) {
+    return videosList.sort((a, b) => {
+      const aKnown = a.combo && a.combo.toUpperCase().split(/\s+/).some(t => trickScores[t]);
+      const bKnown = b.combo && b.combo.toUpperCase().split(/\s+/).some(t => trickScores[t]);
+
+      const viewsA = a.views || 0;
+      const viewsB = b.views || 0;
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+      const scoreA = calcularScore(a);
+      const scoreB = calcularScore(b);
+
+      if (a.isTutorial && b.isTutorial) {
+        if (viewsA !== viewsB) return viewsA - viewsB;
+        return dateB - dateA;
+      }
+
+      if (a.isUnderground && b.isUnderground) {
+        if (aKnown && bKnown) {
+          if (scoreB !== scoreA) return scoreB - scoreA;
+          if (viewsA !== viewsB) return viewsA - viewsB;
+          return dateB - dateA;
+        }
+        if (!aKnown && !bKnown) {
+          if (viewsA !== viewsB) return viewsA - viewsB;
+          return dateB - dateA;
+        }
+        return bKnown - aKnown;
+      }
+
+      return 0;
+    });
+  }
+
+  function renderVideos() {
+    let filtered = videos;
+    if (currentTab === 'underground') {
+      filtered = videos.filter(v => v.isUnderground);
+    } else {
+      filtered = videos.filter(v => v.isTutorial);
+    }
+
+    if (filtered.length === 0) {
+      videosDiv.innerHTML = '<p>No videos found.</p>';
+      return;
+    }
+
+    filtered = ordenarVideos(filtered);
+
+    videosDiv.innerHTML = '';
+    filtered.forEach(video => {
+      const div = document.createElement('div');
+      div.className = 'video-item';
+
+      let trickHtml = '';
+      if (currentTab === 'underground') {
+        if (video.combo) {
+          const parts = video.combo.trim().toUpperCase().split(/\s+/).slice(0, 5);
+          trickHtml = parts.map(t => {
+            const known = trickScores[t] !== undefined;
+            return `<span class="${known ? '' : 'unknown'}">${t}</span>`;
+          }).join(' ');
+        } else {
+          trickHtml = '<span class="unknown">No tricks</span>';
+        }
+      }
+
+      const score = calcularScore(video);
+
+      let html = `<h3>${video.title}</h3>
+        <video controls src="${video.url}"></video>`;
+
+      if (currentTab === 'underground') {
+        html += `<p><strong>Combo:</strong> ${trickHtml}</p>
+          <p><strong>Score:</strong> ${score.toFixed(2)}</p>`;
+      }
+
+      html += `<p><strong>Views:</strong> ${video.views || 0}</p>
+        <p><strong>Uploaded:</strong> ${new Date(video.date).toLocaleString()}</p>
+        <button class="delete-button" data-id="${video.id}" onclick="window.location.href='mailto:featuringia@gmail.com?subject=Deletion Request for Video ID: ${video.id}&body=Please delete the video titled &quot;${video.title}&quot; (ID: ${video.id}). Thank you.'">Request Deletion</button>`;
+
+      div.innerHTML = html;
+      videosDiv.appendChild(div);
+    });
+  }
+
+  uploadForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    uploadBtn.disabled = true;
+    uploadBtn.textContent = 'Uploading...';
+
+    const formData = new FormData(uploadForm);
+
+    if (currentTab === 'underground') {
+      formData.set('isUnderground', 'true');
+      formData.set('isTutorial', 'false');
+    } else {
+      formData.set('isUnderground', 'false');
+      formData.set('isTutorial', 'true');
+    }
+
+    try {
+      const response = await fetch('/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        alert('Error uploading video: ' + (result.message || 'Unknown error'));
+        uploadBtn.disabled = false;
+        uploadBtn.textContent = 'Upload';
+        return;
+      }
+
+      videos.push(result.video);
+
+      alert('Video uploaded successfully!');
+      uploadForm.reset();
+      syncTabs(currentTab);
+      renderVideos();
+    } catch (error) {
+      alert('Error uploading video: ' + error.message);
+    } finally {
+      uploadBtn.disabled = false;
+      uploadBtn.textContent = 'Upload';
+    }
+  });
+
+  async function loadVideosFromServer() {
+    try {
+      const res = await fetch('/videos?tab=' + currentTab);
+      const data = await res.json();
+      if (data.success && Array.isArray(data.videos)) {
+        videos = data.videos;
+        renderVideos();
+      }
+    } catch (e) {
+      console.error('Error loading videos:', e);
+    }
+  }
+
+  syncTabs(currentTab);
+  loadVideosFromServer();
+</script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1749846213179,
+    "title": "Perales basic unclean",
+    "combo": "ATW HATW ATW HTW ATW",
+    "isUnderground": true,
+    "isTutorial": false,
+    "views": 0,
+    "date": "2025-06-13T20:23:33.179Z",
+    "url": "/uploads/Perales basic unclean-1749846213034.mp4",
+    "puntajeCombo": 0,
+    "desconocido": true
+  },
+  {
+    "id": 1749846229648,
+    "title": "Perales basic clean",
+    "combo": "ATW HATW ATW HTW ATW",
+    "isUnderground": true,
+    "isTutorial": false,
+    "views": 0,
+    "date": "2025-06-13T20:23:49.648Z",
+    "url": "/uploads/Perales basic clean-1749846229626.mp4",
+    "puntajeCombo": 0,
+    "desconocido": true
+  },
+  {
+    "id": 1749846254307,
+    "title": "Rvul Move 2 tutorial",
+    "combo": "",
+    "isUnderground": false,
+    "isTutorial": true,
+    "views": 0,
+    "date": "2025-06-13T20:24:14.307Z",
+    "url": "/uploads/Rvul Move 2 tutorial-1749846253515.mp4",
+    "puntajeCombo": 0,
+    "desconocido": true
+  }
+]
